@@ -1,5 +1,8 @@
 import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox-viem";
+import "@nomicfoundation/hardhat-toolbox";
+import "dotenv/config";
+
+const { WALLET_PRIVATE_KEY, INFURA_ID } = process.env;
 
 const bellecourBase = {
   gasPrice: 0,
@@ -33,7 +36,8 @@ const config: HardhatUserConfig = {
       url: "http://127.0.0.1:8545",
     },
     sepolia: {
-      url: `https://sepolia.infura.io/v3/${process.env.INFURA_ID}`,
+      url: `https://sepolia.infura.io/v3/${INFURA_ID}`,
+      accounts: WALLET_PRIVATE_KEY ? [WALLET_PRIVATE_KEY] : [],
     },
   },
 };
