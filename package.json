@@ -1,0 +1,18 @@
+{
+  "name": "Account Abstraction",
+  "scripts": {
+    "clean": "hardhat clean",
+    "compile": "npx hardhat clean && npx hardhat compile",
+    "deploy": "hardhat run ./scripts/1_deploy_entrypoint.ts"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^1.0.2",
+    "@nomiclabs/hardhat-solhint": "^3.0.1",
+    "hardhat": "^2.14.1"
+  },
+  "dependencies": {
+    "@gnosis.pm/safe-contracts": "^1.3.0",
+    "@openzeppelin/contracts": "^4.2.0",
+    "typescript": "^5.3.3"
+  }
+}
