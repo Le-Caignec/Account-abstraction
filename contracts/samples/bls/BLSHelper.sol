@@ -3,12 +3,12 @@ pragma solidity ^0.8.12;
 
 // code taken from : https://github.com/witnet/elliptic-curve-solidity/blob/master/contracts/EllipticCurve.sol
 // missing core functions from "thehubbleproject/bls": jacAdd (and sum)
-library BLSHelper {
+library  BLSHelper {
+
     struct XY {
         uint x;
         uint y;
     }
-
     /**
      * sum all the points in the array
      * NOTE: the "ecAdd" (below) has a special case where x1==y2.
@@ -16,10 +16,7 @@ library BLSHelper {
      * @param _pp the modulus of the curve
      * @return ret the sum of all points
      */
-    function sum(
-        XY[] memory points,
-        uint256 _pp
-    ) internal pure returns (XY memory ret) {
+    function sum(XY[] memory points, uint256 _pp) internal pure returns (XY memory ret){
         uint x = points[0].x;
         uint y = points[0].y;
         uint z = 1;
@@ -48,10 +45,13 @@ library BLSHelper {
         uint256 _x2,
         uint256 _y2,
         uint256 _z2,
-        uint256 _pp
-    ) internal pure returns (uint256, uint256, uint256) {
-        if (_x1 == 0 && _y1 == 0) return (_x2, _y2, _z2);
-        if (_x2 == 0 && _y2 == 0) return (_x1, _y1, _z1);
+        uint256 _pp)
+    internal pure returns (uint256, uint256, uint256)
+    {
+        if (_x1 == 0 && _y1 == 0)
+            return (_x2, _y2, _z2);
+        if (_x2 == 0 && _y2 == 0)
+            return (_x1, _y1, _z1);
 
         // We follow the equations described in https://pdfs.semanticscholar.org/5c64/29952e08025a9649c2b0ba32518e9a7fb5c2.pdf Section 5
         uint[4] memory zs;
@@ -63,17 +63,14 @@ library BLSHelper {
 
         // u1, s1, u2, s2
         zs = [
-            mulmod(_x1, zs[2], _pp),
-            mulmod(_y1, zs[3], _pp),
-            mulmod(_x2, zs[0], _pp),
-            mulmod(_y2, zs[1], _pp)
+        mulmod(_x1, zs[2], _pp),
+        mulmod(_y1, zs[3], _pp),
+        mulmod(_x2, zs[0], _pp),
+        mulmod(_y2, zs[1], _pp)
         ];
 
         // In case of zs[0] == zs[2] && zs[1] == zs[3], double function should be used
-        require(
-            zs[0] != zs[2] || zs[1] != zs[3],
-            "Use jacDouble function instead"
-        );
+        require(zs[0] != zs[2] || zs[1] != zs[3], "Use jacDouble function instead");
 
         uint[4] memory hr;
         //h
@@ -88,16 +85,13 @@ library BLSHelper {
         uint256 qx = addmod(mulmod(hr[1], hr[1], _pp), _pp - hr[3], _pp);
         qx = addmod(qx, _pp - mulmod(2, mulmod(zs[0], hr[2], _pp), _pp), _pp);
         // qy = -s1*z1*h^3+r(u1*h^2 -x^3)
-        uint256 qy = mulmod(
-            hr[1],
-            addmod(mulmod(zs[0], hr[2], _pp), _pp - qx, _pp),
-            _pp
-        );
+        uint256 qy = mulmod(hr[1], addmod(mulmod(zs[0], hr[2], _pp), _pp - qx, _pp), _pp);
         qy = addmod(qy, _pp - mulmod(zs[1], hr[3], _pp), _pp);
         // qz = h*z1*z2
         uint256 qz = mulmod(hr[0], mulmod(_z1, _z2, _pp), _pp);
         return (qx, qy, qz);
     }
+
 
     /// @dev Converts a point (x, y, z) expressed in Jacobian coordinates to affine coordinates (x', y', 1).
     /// @param _x coordinate x
@@ -109,8 +103,9 @@ library BLSHelper {
         uint256 _x,
         uint256 _y,
         uint256 _z,
-        uint256 _pp
-    ) internal pure returns (uint256, uint256) {
+        uint256 _pp)
+    internal pure returns (uint256, uint256)
+    {
         uint256 zInv = invMod(_z, _pp);
         uint256 zInv2 = mulmod(zInv, zInv, _pp);
         uint256 x2 = mulmod(_x, zInv2, _pp);
@@ -118,6 +113,7 @@ library BLSHelper {
 
         return (x2, y2);
     }
+
 
     /// @dev Modular euclidean inverse of a number (mod p).
     /// @param _x The number
@@ -150,9 +146,11 @@ library BLSHelper {
         uint256 _y,
         uint256 _z,
         uint256 _aa,
-        uint256 _pp
-    ) internal pure returns (uint256, uint256, uint256) {
-        if (_z == 0) return (_x, _y, _z);
+        uint256 _pp)
+    internal pure returns (uint256, uint256, uint256)
+    {
+        if (_z == 0)
+            return (_x, _y, _z);
 
         // We follow the equations described in https://pdfs.semanticscholar.org/5c64/29952e08025a9649c2b0ba32518e9a7fb5c2.pdf Section 5
         // Note: there is a bug in the paper regarding the m parameter, M=3*(x1^2)+a*(z1^4)
@@ -164,22 +162,14 @@ library BLSHelper {
         // s
         uint s = mulmod(4, mulmod(_x, y, _pp), _pp);
         // m
-        uint m = addmod(
-            mulmod(3, x, _pp),
-            mulmod(_aa, mulmod(z, z, _pp), _pp),
-            _pp
-        );
+        uint m = addmod(mulmod(3, x, _pp), mulmod(_aa, mulmod(z, z, _pp), _pp), _pp);
 
         // x, y, z at this point will be reassigned and rather represent qx, qy, qz from the paper
         // This allows to reduce the gas cost and stack footprint of the algorithm
         // qx
         x = addmod(mulmod(m, m, _pp), _pp - addmod(s, s, _pp), _pp);
         // qy = -8*y1^4 + M(S-T)
-        y = addmod(
-            mulmod(m, addmod(s, _pp - x, _pp), _pp),
-            _pp - mulmod(8, mulmod(y, y, _pp), _pp),
-            _pp
-        );
+        y = addmod(mulmod(m, addmod(s, _pp - x, _pp), _pp), _pp - mulmod(8, mulmod(y, y, _pp), _pp), _pp);
         // qz = 2*y1*z1
         z = mulmod(2, mulmod(_y, _z, _pp), _pp);
 
@@ -200,8 +190,9 @@ library BLSHelper {
         uint256 _x2,
         uint256 _y2,
         uint256 _aa,
-        uint256 _pp
-    ) internal pure returns (uint256, uint256) {
+        uint256 _pp)
+    internal pure returns (uint256, uint256)
+    {
         uint x = 0;
         uint y = 0;
         uint z = 0;
@@ -213,12 +204,29 @@ library BLSHelper {
                 return (0, 0);
             } else {
                 // P1 = P2
-                (x, y, z) = jacDouble(_x1, _y1, 1, _aa, _pp);
+                (x, y, z) = jacDouble(
+                    _x1,
+                    _y1,
+                    1,
+                    _aa,
+                    _pp);
             }
         } else {
-            (x, y, z) = jacAdd(_x1, _y1, 1, _x2, _y2, 1, _pp);
+            (x, y, z) = jacAdd(
+                _x1,
+                _y1,
+                1,
+                _x2,
+                _y2,
+                1,
+                _pp);
         }
         // Get back to affine
-        return toAffine(x, y, z, _pp);
+        return toAffine(
+            x,
+            y,
+            z,
+            _pp);
     }
+
 }

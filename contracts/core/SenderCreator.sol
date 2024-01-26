@@ -2,14 +2,15 @@
 pragma solidity ^0.8.12;
 
 /**
- * helper contract for EntryPoint, to call userOp.initCode from a "neutral" address,
+ * Helper contract for EntryPoint, to call userOp.initCode from a "neutral" address,
  * which is explicitly not the entryPoint itself.
  */
 contract SenderCreator {
     /**
-     * call the "initCode" factory to create and return the sender account address
-     * @param initCode the initCode value from a UserOp. contains 20 bytes of factory address, followed by calldata
-     * @return sender the returned address of the created account, or zero address on failure.
+     * Call the "initCode" factory to create and return the sender account address.
+     * @param initCode - The initCode value from a UserOp. contains 20 bytes of factory address,
+     *                   followed by calldata.
+     * @return sender  - The returned address of the created account, or zero address on failure.
      */
     function createSender(
         bytes calldata initCode
@@ -18,7 +19,7 @@ contract SenderCreator {
         bytes memory initCallData = initCode[20:];
         bool success;
         /* solhint-disable no-inline-assembly */
-        assembly {
+        assembly ("memory-safe") {
             success := call(
                 gas(),
                 factory,

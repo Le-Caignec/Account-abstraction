@@ -1,14 +1,18 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.12;
 
+/* solhint-disable no-inline-assembly */
+
 /**
- * returned data from validateUserOp.
- * validateUserOp returns a uint256, with is created by `_packedValidationData` and parsed by `_parseValidationData`
- * @param aggregator - address(0) - the account validated the signature by itself.
- *              address(1) - the account failed to validate the signature.
- *              otherwise - this is an address of a signature aggregator that must be used to validate the signature.
- * @param validAfter - this UserOp is valid only after this timestamp.
- * @param validaUntil - this UserOp is valid only up to this timestamp.
+ * Returned data from validateUserOp.
+ * validateUserOp returns a uint256, with is created by `_packedValidationData` and
+ * parsed by `_parseValidationData`.
+ * @param aggregator  - address(0) - The account validated the signature by itself.
+ *                      address(1) - The account failed to validate the signature.
+ *                      otherwise - This is an address of a signature aggregator that must
+ *                                  be used to validate the signature.
+ * @param validAfter  - This UserOp is valid only after this timestamp.
+ * @param validaUntil - This UserOp is valid only up to this timestamp.
  */
 struct ValidationData {
     address aggregator;
@@ -16,10 +20,13 @@ struct ValidationData {
     uint48 validUntil;
 }
 
-//extract sigFailed, validAfter, validUntil.
-// also convert zero validUntil to type(uint48).max
+/**
+ * Extract sigFailed, validAfter, validUntil.
+ * Also convert zero validUntil to type(uint48).max.
+ * @param validationData - The packed validation data.
+ */
 function _parseValidationData(
-    uint validationData
+    uint256 validationData
 ) pure returns (ValidationData memory data) {
     address aggregator = address(uint160(validationData));
     uint48 validUntil = uint48(validationData >> 160);
@@ -30,7 +37,11 @@ function _parseValidationData(
     return ValidationData(aggregator, validAfter, validUntil);
 }
 
-// intersect account and paymaster ranges.
+/**
+ * Intersect account and paymaster ranges.
+ * @param validationData          - The packed validation data of the account.
+ * @param paymasterValidationData - The packed validation data of the paymaster.
+ */
 function _intersectTimeRange(
     uint256 validationData,
     uint256 paymasterValidationData
@@ -56,8 +67,8 @@ function _intersectTimeRange(
 }
 
 /**
- * helper to pack the return value for validateUserOp
- * @param data - the ValidationData to pack
+ * Helper to pack the return value for validateUserOp.
+ * @param data - The ValidationData to pack.
  */
 function _packValidationData(
     ValidationData memory data
@@ -69,10 +80,10 @@ function _packValidationData(
 }
 
 /**
- * helper to pack the return value for validateUserOp, when not using an aggregator
- * @param sigFailed - true for signature failure, false for success
- * @param validUntil last timestamp this UserOperation is valid (or zero for infinite)
- * @param validAfter first timestamp this UserOperation is valid
+ * Helper to pack the return value for validateUserOp, when not using an aggregator.
+ * @param sigFailed  - True for signature failure, false for success.
+ * @param validUntil - Last timestamp this UserOperation is valid (or zero for infinite).
+ * @param validAfter - First timestamp this UserOperation is valid.
  */
 function _packValidationData(
     bool sigFailed,
@@ -84,3 +95,26 @@ function _packValidationData(
         (uint256(validUntil) << 160) |
         (uint256(validAfter) << (160 + 48));
 }
+
+/**
+ * keccak function over calldata.
+ * @dev copy calldata into memory, do keccak and drop allocated memory. Strangely, this is more efficient than letting solidity do it.
+ */
+    function calldataKeccak(bytes calldata data) pure returns (bytes32 ret) {
+        assembly ("memory-safe") {
+            let mem := mload(0x40)
+            let len := data.length
+            calldatacopy(mem, data.offset, len)
+            ret := keccak256(mem, len)
+        }
+    }
+
+
+/**
+ * The minimum of two numbers.
+ * @param a - First number.
+ * @param b - Second number.
+ */
+    function min(uint256 a, uint256 b) pure returns (uint256) {
+        return a < b ? a : b;
+    }

@@ -11,7 +11,6 @@ import "../samples/SimpleAccount.sol";
  * also, the "since" value is not really useful, only for testing the entrypoint.
  */
 contract TestExpiryAccount is SimpleAccount {
-    using ECDSA for bytes32;
 
     mapping(address => uint48) public ownerAfter;
     mapping(address => uint48) public ownerUntil;
@@ -28,23 +27,17 @@ contract TestExpiryAccount is SimpleAccount {
     // solhint-disable-next-line no-empty-blocks
     function _disableInitializers() internal override {}
 
-    function addTemporaryOwner(
-        address owner,
-        uint48 _after,
-        uint48 _until
-    ) public onlyOwner {
+    function addTemporaryOwner(address owner, uint48 _after, uint48 _until) public onlyOwner {
         require(_until > _after, "wrong until/after");
         ownerAfter[owner] = _after;
         ownerUntil[owner] = _until;
     }
 
     /// implement template method of BaseAccount
-    function _validateSignature(
-        UserOperation calldata userOp,
-        bytes32 userOpHash
-    ) internal view override returns (uint256 validationData) {
-        bytes32 hash = userOpHash.toEthSignedMessageHash();
-        address signer = hash.recover(userOp.signature);
+    function _validateSignature(PackedUserOperation calldata userOp, bytes32 userOpHash)
+    internal override view returns (uint256 validationData) {
+        bytes32 hash = MessageHashUtils.toEthSignedMessageHash(userOpHash);
+        address signer = ECDSA.recover(hash,userOp.signature);
         uint48 _until = ownerUntil[signer];
         uint48 _after = ownerAfter[signer];
 
