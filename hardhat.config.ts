@@ -1,7 +1,6 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "dotenv/config";
-import "hardhat-deploy";
 
 const { WALLET_PRIVATE_KEY, INFURA_ID } = process.env;
 
@@ -12,7 +11,7 @@ const bellecourBase = {
 };
 
 const config: HardhatUserConfig = {
-  defaultNetwork: "hardhat",
+  defaultNetwork: "localhost",
   solidity: {
     compilers: [
       {
@@ -32,7 +31,6 @@ const config: HardhatUserConfig = {
     //     url: "https://bellecour.iex.ec",
     //   },
     // },
-    hardhat: {},
     "local-bellecour-fork": {
       ...bellecourBase,
       url: "http://127.0.0.1:8545",

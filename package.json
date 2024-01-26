@@ -3,15 +3,14 @@
   "scripts": {
     "clean": "hardhat clean",
     "compile": "npx hardhat clean && npx hardhat compile",
-    "deploy": "hardhat run ./deploy/1_deploy_entrypoint.ts",
-    "runop": "hardhat run src/runop.ts "
+    "deploy": "hardhat run ./deploy/1_deploy_entrypoint_AAF.ts",
+    "start": "hardhat run src/runUser0p.ts "
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^1.0.2",
     "@nomiclabs/hardhat-solhint": "^3.0.1",
     "@uniswap/v3-periphery": "^1.4.4",
-    "hardhat": "^2.14.1",
-    "hardhat-deploy": "^0.11.45",
+    "hardhat": "^2.19.3",
     "typechain": "^8.3.2"
   },
   "dependencies": {
