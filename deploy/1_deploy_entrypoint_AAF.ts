@@ -3,7 +3,7 @@ import { ethers } from "hardhat";
 export async function deploy() {
   const provider = ethers.provider;
   const from = await provider.getSigner().getAddress();
-  console.log(from);
+
   // deploy EntryPoint
   const EntryPointFactory = await ethers.getContractFactory("EntryPoint");
   const entryPointContract = await EntryPointFactory.deploy();
@@ -32,8 +32,3 @@ export async function deploy() {
     TestCounterAddress: testCounterContract.address,
   };
 }
-
-deploy().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});

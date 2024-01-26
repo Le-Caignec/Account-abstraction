@@ -28,28 +28,34 @@ export async function run() {
       .encodeFunctionData("createAccount", [address0, ethers.utils.id("salt")])
       .slice(2);
   const nonce = 1;
-  const callData = AccountAbstractionFactory.interface.encodeFunctionData(
-    "execute",
-    ["", "", ""]
-  );
-  const sender = await EntryPointContract.getSenderAddress(initCode);
+  //   const callData = AccountAbstractionFactory.interface.encodeFunctionData(
+  //     "execute",
+  //     ["", "", ""]
+  //   );
 
-  const PackedUserOperation = {
-    sender,
-    nonce,
-    initCode,
-    callData,
-    accountGasLimits: "0x",
-    preVerificationGas: 50_000,
-    maxFeePerGas: ethers.utils.parseUnits("10", "gwei"),
-    maxPriorityFeePerGas: ethers.utils.parseUnits("5", "gwei"),
-    paymasterAndData: "0x",
-    signature: "0x",
-  };
+  try {
+    await EntryPointContract.callStatic.getSenderAddress(initCode);
+  } catch (error: any) {
+    // catch the revert custom error : error SenderAddressResult(address sender);
+    const sender = error.errorArgs[0];
+  }
 
-  EntryPointContract.depositTo(sender, { value: ethers.utils.parseEther("1") });
-  // second args is the beneficiary address => should be the bundler address
-  EntryPointContract.handleOps([PackedUserOperation], address0);
+  //   const PackedUserOperation = {
+  //     sender,
+  //     nonce,
+  //     initCode,
+  //     callData,
+  //     accountGasLimits: "0x",
+  //     preVerificationGas: 50_000,
+  //     maxFeePerGas: ethers.utils.parseUnits("10", "gwei"),
+  //     maxPriorityFeePerGas: ethers.utils.parseUnits("5", "gwei"),
+  //     paymasterAndData: "0x",
+  //     signature: "0x",
+  //   };
+
+  //   EntryPointContract.depositTo(sender, { value: ethers.utils.parseEther("1") });
+  //   // second args is the beneficiary address => should be the bundler address
+  //   EntryPointContract.handleOps([PackedUserOperation], address0);
 }
 
 run().catch((error) => {
