@@ -1,34 +1,32 @@
 import { ethers } from "hardhat";
 
 export async function deploy() {
-  const provider = ethers.provider;
-  const from = await provider.getSigner().getAddress();
-
   // deploy EntryPoint
   const EntryPointFactory = await ethers.getContractFactory("EntryPoint");
   const entryPointContract = await EntryPointFactory.deploy();
-  console.log("==EntryPoint=", entryPointContract.address);
+  const entryPointAddress = await entryPointContract.getAddress();
+  console.log("==EntryPoint==", entryPointAddress);
 
   // deploy Account Abstraction Factory
   const SimpleAccountFactoryFactory = await ethers.getContractFactory(
     "SimpleAccountFactory"
   );
   const simpleAccountFactoryContract = await SimpleAccountFactoryFactory.deploy(
-    entryPointContract.address
+    entryPointAddress
   );
-  console.log(
-    "==AccountAbstractionFactory=",
-    simpleAccountFactoryContract.address
-  );
+  const simpleAccountFactoryAddress =
+    await simpleAccountFactoryContract.getAddress();
+  console.log("==AccountAbstractionFactory==", simpleAccountFactoryAddress);
 
   // deploy test contract
   const TestCounterFactory = await ethers.getContractFactory("TestCounter");
   const testCounterContract = await TestCounterFactory.deploy();
-  console.log("==TestCounter=", testCounterContract.address);
+  const testCounterAddress = await testCounterContract.getAddress();
+  console.log("==TestCounter==", await testCounterContract.getAddress());
 
   return {
-    EntryPointAddress: entryPointContract.address,
-    AccountAbstractionFactoryAddress: simpleAccountFactoryContract.address,
-    TestCounterAddress: testCounterContract.address,
+    EntryPointAddress: entryPointAddress,
+    AccountAbstractionFactoryAddress: simpleAccountFactoryAddress,
+    TestCounterAddress: testCounterAddress,
   };
 }

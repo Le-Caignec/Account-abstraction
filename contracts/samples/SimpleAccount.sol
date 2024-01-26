@@ -13,17 +13,26 @@ import "../core/BaseAccount.sol";
 import "./callback/TokenCallbackHandler.sol";
 
 /**
-  * minimal account.
-  *  this is sample minimal account.
-  *  has execute, eth handling methods
-  *  has a single signer that can send requests through the entryPoint.
-  */
-contract SimpleAccount is BaseAccount, TokenCallbackHandler, UUPSUpgradeable, Initializable {
+ * minimal account.
+ *  this is sample minimal account.
+ *  has execute, eth handling methods
+ *  has a single signer that can send requests through the entryPoint.
+ */
+contract SimpleAccount is
+    BaseAccount,
+    TokenCallbackHandler,
+    UUPSUpgradeable,
+    Initializable
+{
     address public owner;
+    uint256 public count;
 
     IEntryPoint private immutable _entryPoint;
 
-    event SimpleAccountInitialized(IEntryPoint indexed entryPoint, address indexed owner);
+    event SimpleAccountInitialized(
+        IEntryPoint indexed entryPoint,
+        address indexed owner
+    );
 
     modifier onlyOwner() {
         _onlyOwner();
@@ -45,24 +54,39 @@ contract SimpleAccount is BaseAccount, TokenCallbackHandler, UUPSUpgradeable, In
 
     function _onlyOwner() internal view {
         //directly from EOA owner, or through the account itself (which gets redirected through execute())
-        require(msg.sender == owner || msg.sender == address(this), "only owner");
+        require(
+            msg.sender == owner || msg.sender == address(this),
+            "only owner"
+        );
     }
 
     /**
      * execute a transaction (called directly from owner, or by entryPoint)
      */
-    function execute(address dest, uint256 value, bytes calldata func) external {
-        _requireFromEntryPointOrOwner();
-        _call(dest, value, func);
+    // function execute(address dest, uint256 value, bytes calldata func) external {
+    //     _requireFromEntryPointOrOwner();
+    //     _call(dest, value, func);
+    // }
+
+    function execute() external {
+        count++;
     }
 
     /**
      * execute a sequence of transactions
      * @dev to reduce gas consumption for trivial case (no value), use a zero-length array to mean zero value
      */
-    function executeBatch(address[] calldata dest, uint256[] calldata value, bytes[] calldata func) external {
+    function executeBatch(
+        address[] calldata dest,
+        uint256[] calldata value,
+        bytes[] calldata func
+    ) external {
         _requireFromEntryPointOrOwner();
-        require(dest.length == func.length && (value.length == 0 || value.length == func.length), "wrong array lengths");
+        require(
+            dest.length == func.length &&
+                (value.length == 0 || value.length == func.length),
+            "wrong array lengths"
+        );
         if (value.length == 0) {
             for (uint256 i = 0; i < dest.length; i++) {
                 _call(dest[i], 0, func[i]);
@@ -77,7 +101,7 @@ contract SimpleAccount is BaseAccount, TokenCallbackHandler, UUPSUpgradeable, In
     /**
      * @dev The _entryPoint member is immutable, to reduce gas consumption.  To upgrade EntryPoint,
      * a new implementation of SimpleAccount must be deployed with the new EntryPoint address, then upgrading
-      * the implementation by calling `upgradeTo()`
+     * the implementation by calling `upgradeTo()`
      */
     function initialize(address anOwner) public virtual initializer {
         _initialize(anOwner);
@@ -90,12 +114,17 @@ contract SimpleAccount is BaseAccount, TokenCallbackHandler, UUPSUpgradeable, In
 
     // Require the function call went through EntryPoint or owner
     function _requireFromEntryPointOrOwner() internal view {
-        require(msg.sender == address(entryPoint()) || msg.sender == owner, "account: not Owner or EntryPoint");
+        require(
+            msg.sender == address(entryPoint()) || msg.sender == owner,
+            "account: not Owner or EntryPoint"
+        );
     }
 
     /// implement template method of BaseAccount
-    function _validateSignature(PackedUserOperation calldata userOp, bytes32 userOpHash)
-    internal override virtual returns (uint256 validationData) {
+    function _validateSignature(
+        PackedUserOperation calldata userOp,
+        bytes32 userOpHash
+    ) internal virtual override returns (uint256 validationData) {
         bytes32 hash = MessageHashUtils.toEthSignedMessageHash(userOpHash);
         if (owner != ECDSA.recover(hash, userOp.signature))
             return SIG_VALIDATION_FAILED;
@@ -130,13 +159,17 @@ contract SimpleAccount is BaseAccount, TokenCallbackHandler, UUPSUpgradeable, In
      * @param withdrawAddress target to send to
      * @param amount to withdraw
      */
-    function withdrawDepositTo(address payable withdrawAddress, uint256 amount) public onlyOwner {
+    function withdrawDepositTo(
+        address payable withdrawAddress,
+        uint256 amount
+    ) public onlyOwner {
         entryPoint().withdrawTo(withdrawAddress, amount);
     }
 
-    function _authorizeUpgrade(address newImplementation) internal view override {
+    function _authorizeUpgrade(
+        address newImplementation
+    ) internal view override {
         (newImplementation);
         _onlyOwner();
     }
 }
-
