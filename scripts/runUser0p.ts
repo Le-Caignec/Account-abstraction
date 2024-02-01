@@ -1,4 +1,5 @@
 import { ethers } from "hardhat";
+import { keccak256 } from "ethers";
 import { deploy } from "../deploy/1_deploy_entrypoint_AAF";
 
 export async function run() {
@@ -27,7 +28,6 @@ export async function run() {
     FactoryAccountAbstractionContract.interface
       .encodeFunctionData("createAccount", [address0, ethers.id("salt")])
       .slice(2);
-  const nonce = 1;
   const callData = AccountAbstractionFactory.interface.encodeFunctionData(
     "execute",
     []
@@ -43,25 +43,74 @@ export async function run() {
     )[0];
     console.log("==AA Address==", sender);
   }
-
-  const PackedUserOperation = {
+  const nonce = await EntryPointContract.getNonce(sender, 0);
+  let PackedUserOperation = {
     sender,
     nonce,
     initCode,
     callData,
-    accountGasLimits: ethers.encodeBytes32String("9000000"),
-    preVerificationGas: 20_000,
-    maxFeePerGas: ethers.parseUnits("10", "gwei"),
-    maxPriorityFeePerGas: ethers.parseUnits("5", "gwei"),
+    accountGasLimits:
+      ethers.toBeHex(9000_000, 16) + ethers.toBeHex(900_000, 16).slice(2),
+    preVerificationGas: 50_000,
+    maxFeePerGas: ethers.parseUnits("1000", "gwei"),
+    maxPriorityFeePerGas: ethers.parseUnits("1000", "gwei"),
     paymasterAndData: "0x",
-    signature: "0x",
+    signature: "",
   };
 
-  await EntryPointContract.depositTo(sender, { value: ethers.parseEther("1") });
+  // Serialize the entire PackedUserOperation struct
+  const packedData = ethers.AbiCoder.defaultAbiCoder().encode(
+    [
+      "address",
+      "uint256",
+      "bytes32",
+      "bytes32",
+      "bytes32",
+      "uint256",
+      "uint256",
+      "uint256",
+      "bytes32",
+    ],
+    [
+      PackedUserOperation.sender,
+      PackedUserOperation.nonce,
+      keccak256(PackedUserOperation.initCode),
+      keccak256(PackedUserOperation.callData),
+      PackedUserOperation.accountGasLimits,
+      PackedUserOperation.preVerificationGas,
+      PackedUserOperation.maxFeePerGas,
+      PackedUserOperation.maxPriorityFeePerGas,
+      keccak256(PackedUserOperation.paymasterAndData),
+    ]
+  );
+  console.log("PACKED_USER_OP_HASH", ethers.keccak256(packedData));
+  // The request ID is a hash over the content of the userOp (except the signature), the entrypoint and the chainId.
+  const chainId = (await ethers.provider.getNetwork()).chainId;
+  const enc = ethers.AbiCoder.defaultAbiCoder().encode(
+    ["bytes32", "address", "uint256"],
+    [ethers.keccak256(packedData), EntryPointAddress, chainId]
+  );
+  const userOpHash = ethers.keccak256(enc);
+  PackedUserOperation.signature = await bundler.signMessage(
+    ethers.getBytes(userOpHash)
+  );
+  console.log(
+    await EntryPointContract.verifyUserOpHash(
+      PackedUserOperation,
+      ethers.keccak256(packedData),
+      userOpHash
+    )
+  );
+
+  await EntryPointContract.depositTo(sender, {
+    value: ethers.parseEther("200"),
+  });
   // second args is the beneficiary address => should be the bundler address
   await EntryPointContract.handleOps([PackedUserOperation], address0);
-
-  console.log(await AccountAbstractionFactory.attach(sender).count());
+  console.log(
+    "COUNT 🚀",
+    await AccountAbstractionFactory.attach(sender).count()
+  );
 }
 
 run().catch((error) => {

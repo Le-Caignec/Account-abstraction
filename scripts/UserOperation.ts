@@ -7,7 +7,7 @@ export interface UserOperation {
   initCode: typ.bytes
   callData: typ.bytes
   callGasLimit: typ.uint128
-  verificationGasLimit: typ.uint128 
+  verificationGasLimit: typ.uint128
   preVerificationGas: typ.uint256
   maxFeePerGas: typ.uint256
   maxPriorityFeePerGas: typ.uint256
