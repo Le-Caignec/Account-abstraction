@@ -1,11 +1,14 @@
 import { ethers } from "hardhat";
-import { deploy } from "../deploy/1_deploy_entrypoint_AAF";
-import { DefaultsForUserOp, signUserOp } from "./utils/UserOp";
-import { UserOperation } from "./utils/types";
+import { deploy } from "../../deploy/1_deploy_entrypoint_AAF";
+import { DefaultsForUserOp, signUserOp } from "../utils/UserOp";
+import { UserOperation } from "../utils/types";
 
-export async function run() {
-  const { EntryPointAddress, AccountAbstractionFactoryAddress } =
-    await deploy();
+export async function runBatchOfTransaction() {
+  const {
+    EntryPointAddress,
+    AccountAbstractionFactoryAddress,
+    TestCounterAddress,
+  } = await deploy();
 
   const EntryPointContract = await ethers.getContractAt(
     "EntryPoint",
@@ -16,6 +19,7 @@ export async function run() {
     AccountAbstractionFactoryAddress
   );
   const AccountAbstraction = await ethers.getContractFactory("SimpleAccount");
+  const TestCounterFactory = await ethers.getContractFactory("TestCounter");
 
   const chainId = (await ethers.provider.getNetwork()).chainId;
   const [bundler, AA_Owner] = await ethers.getSigners();
@@ -28,9 +32,18 @@ export async function run() {
     ),
   ]);
 
-  const callData = AccountAbstraction.interface.encodeFunctionData(
-    "execute",
+  const innerCallData_1 = TestCounterFactory.interface.encodeFunctionData(
+    "count",
     []
+  );
+  const innerCallData_2 = TestCounterFactory.interface.encodeFunctionData(
+    "count",
+    []
+  );
+
+  const callData = AccountAbstraction.interface.encodeFunctionData(
+    "executeBatch",
+    [[TestCounterAddress, TestCounterAddress], [0, 0], [innerCallData_1,innerCallData_2]]
   );
 
   // use the create2 to
@@ -54,7 +67,7 @@ export async function run() {
     nonce,
     initCode,
     callData,
-    callGasLimit: 300_00,
+    callGasLimit: 500_00,
     verificationGasLimit: 2_100_00,
   };
 
@@ -75,11 +88,13 @@ export async function run() {
     bundler.address
   );
 
-  console.log(await AccountAbstraction.attach(sender).count());
+  console.log(
+    await TestCounterFactory.attach(TestCounterAddress).counters(sender)
+  );
   console.log("Success 🏎️");
 }
 
-run().catch((error) => {
+runBatchOfTransaction().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
