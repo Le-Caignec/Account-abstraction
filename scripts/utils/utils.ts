@@ -1,5 +1,4 @@
-import { ethers } from "hardhat";
-import { BigNumberish, toBeHex } from "ethers";
+import { ethers, BigNumberish, toBeHex } from "ethers";
 
 export const AddressZero = ethers.ZeroAddress;
 export const HashZero = ethers.ZeroHash;
@@ -8,7 +7,7 @@ export function packAccountGasLimits(
   validationGasLimit: BigNumberish,
   callGasLimit: BigNumberish
 ): string {
-  return ethers.hexConcat([
+  return ethers.concat([
     toBeHex(validationGasLimit, 16),
     toBeHex(callGasLimit, 16),
   ]);
@@ -16,11 +15,12 @@ export function packAccountGasLimits(
 
 export function packPaymasterData(
   paymaster: string,
-  paymasterVerificationGasLimit: BytesLike | Hexable | number | bigint,
-  postOpGasLimit: BytesLike | Hexable | number | bigint,
+  paymasterVerificationGasLimit: BigNumberish | number | bigint,
+  postOpGasLimit: BigNumberish | number | bigint,
   paymasterData: string
 ): string {
-  return ethers.hexConcat([
+  // TODO : not sure, should check the SC 
+  return ethers.concat([
     paymaster,
     toBeHex(paymasterVerificationGasLimit, 16),
     toBeHex(postOpGasLimit, 16),

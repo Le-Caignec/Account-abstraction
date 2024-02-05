@@ -1,6 +1,7 @@
 import { ethers } from "hardhat";
-import { keccak256 } from "ethers";
 import { deploy } from "../deploy/1_deploy_entrypoint_AAF";
+import { DefaultsForUserOp, signUserOp } from "./utils/UserOp";
+import { UserOperation } from "./utils/types";
 
 export async function run() {
   const { EntryPointAddress, AccountAbstractionFactoryAddress } =
@@ -14,24 +15,25 @@ export async function run() {
     "SimpleAccountFactory",
     AccountAbstractionFactoryAddress
   );
-  const AccountAbstractionFactory = await ethers.getContractFactory(
-    "SimpleAccount"
-  );
+  const AccountAbstraction = await ethers.getContractFactory("SimpleAccount");
 
-  const [bundler] = await ethers.getSigners();
-  const address0 = bundler.address;
+  const chainId = (await ethers.provider.getNetwork()).chainId;
+  const [bundler, AA_Owner] = await ethers.getSigners();
 
-  // first arg correspond to the owner of the AA account. Here is the sender of the userOp tx but
-  // in real it should a different address from the bundler address
-  const initCode =
-    AccountAbstractionFactoryAddress +
-    FactoryAccountAbstractionContract.interface
-      .encodeFunctionData("createAccount", [address0, ethers.id("salt")])
-      .slice(2);
-  const callData = AccountAbstractionFactory.interface.encodeFunctionData(
+  const initCode = ethers.concat([
+    AccountAbstractionFactoryAddress,
+    FactoryAccountAbstractionContract.interface.encodeFunctionData(
+      "createAccount",
+      [AA_Owner.address, ethers.id("salt")]
+    ),
+  ]);
+
+  const callData = AccountAbstraction.interface.encodeFunctionData(
     "execute",
     []
   );
+
+  // use the create2 to
   let sender;
   try {
     await EntryPointContract.getSenderAddress(initCode);
@@ -43,74 +45,38 @@ export async function run() {
     )[0];
     console.log("==AA Address==", sender);
   }
+
   const nonce = await EntryPointContract.getNonce(sender, 0);
-  let PackedUserOperation = {
+
+  let userOp: UserOperation = {
+    ...DefaultsForUserOp,
     sender,
     nonce,
     initCode,
     callData,
-    accountGasLimits:
-      ethers.toBeHex(9000_000, 16) + ethers.toBeHex(900_000, 16).slice(2),
-    preVerificationGas: 50_000,
-    maxFeePerGas: ethers.parseUnits("1000", "gwei"),
-    maxPriorityFeePerGas: ethers.parseUnits("1000", "gwei"),
-    paymasterAndData: "0x",
-    signature: "",
+    callGasLimit: 300_00,
+    verificationGasLimit: 2_100_00,
   };
 
-  // Serialize the entire PackedUserOperation struct
-  const packedData = ethers.AbiCoder.defaultAbiCoder().encode(
-    [
-      "address",
-      "uint256",
-      "bytes32",
-      "bytes32",
-      "bytes32",
-      "uint256",
-      "uint256",
-      "uint256",
-      "bytes32",
-    ],
-    [
-      PackedUserOperation.sender,
-      PackedUserOperation.nonce,
-      keccak256(PackedUserOperation.initCode),
-      keccak256(PackedUserOperation.callData),
-      PackedUserOperation.accountGasLimits,
-      PackedUserOperation.preVerificationGas,
-      PackedUserOperation.maxFeePerGas,
-      PackedUserOperation.maxPriorityFeePerGas,
-      keccak256(PackedUserOperation.paymasterAndData),
-    ]
+  const packedSignedUserOperation = await signUserOp(
+    userOp,
+    AA_Owner,
+    EntryPointAddress,
+    Number(chainId)
   );
-  console.log("PACKED_USER_OP_HASH", ethers.keccak256(packedData));
-  // The request ID is a hash over the content of the userOp (except the signature), the entrypoint and the chainId.
-  const chainId = (await ethers.provider.getNetwork()).chainId;
-  const enc = ethers.AbiCoder.defaultAbiCoder().encode(
-    ["bytes32", "address", "uint256"],
-    [ethers.keccak256(packedData), EntryPointAddress, chainId]
-  );
-  const userOpHash = ethers.keccak256(enc);
-  PackedUserOperation.signature = await bundler.signMessage(
-    ethers.getBytes(userOpHash)
-  );
-  console.log(
-    await EntryPointContract.verifyUserOpHash(
-      PackedUserOperation,
-      ethers.keccak256(packedData),
-      userOpHash
-    )
+  console.log("packedSignedUserOperation", packedSignedUserOperation);
+  await EntryPointContract.connect(AA_Owner).depositTo(sender, {
+    value: ethers.parseEther("0.1"),
+  });
+
+  // second args is the beneficiary address => should be the bundler address that will take a cut
+  await EntryPointContract.handleOps(
+    [packedSignedUserOperation],
+    bundler.address
   );
 
-  await EntryPointContract.depositTo(sender, {
-    value: ethers.parseEther("200"),
-  });
-  // second args is the beneficiary address => should be the bundler address
-  await EntryPointContract.handleOps([PackedUserOperation], address0);
-  console.log(
-    "COUNT 🚀",
-    await AccountAbstractionFactory.attach(sender).count()
-  );
+  console.log(await AccountAbstraction.attach(sender).count());
+  console.log("Success 🏎️");
 }
 
 run().catch((error) => {
