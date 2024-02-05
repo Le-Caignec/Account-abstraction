@@ -25,7 +25,6 @@ contract SimpleAccount is
     Initializable
 {
     address public owner;
-    uint256 public count;
 
     IEntryPoint private immutable _entryPoint;
 
@@ -63,13 +62,13 @@ contract SimpleAccount is
     /**
      * execute a transaction (called directly from owner, or by entryPoint)
      */
-    // function execute(address dest, uint256 value, bytes calldata func) external {
-    //     _requireFromEntryPointOrOwner();
-    //     _call(dest, value, func);
-    // }
-
-    function execute() external {
-        count++;
+    function execute(
+        address dest,
+        uint256 value,
+        bytes calldata func
+    ) external {
+        _requireFromEntryPointOrOwner();
+        _call(dest, value, func);
     }
 
     /**
