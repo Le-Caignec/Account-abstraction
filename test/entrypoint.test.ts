@@ -67,7 +67,7 @@ import {
 import { debugTransaction } from "./debugTx";
 import { BytesLike } from "@ethersproject/bytes";
 import { toChecksumAddress } from "ethereumjs-util";
-import { getERC165InterfaceID } from "../scripts/Utils";
+import { getERC165InterfaceID } from "../scripts/utils/utils";
 
 describe("EntryPoint", function () {
   let entryPoint: EntryPoint;

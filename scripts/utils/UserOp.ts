@@ -1,16 +1,35 @@
-import { arrayify, defaultAbiCoder, keccak256 } from "ethers/lib/utils";
-import { Wallet } from "ethers";
-import {
-  AddressZero,
-  packAccountGasLimits,
-  packPaymasterData,
-} from "./utils.js";
-import {
-  ecsign,
-  toRpcSig,
-  keccak256 as keccak256_buffer,
-} from "ethereumjs-util";
-import { PackedUserOperation, UserOperation } from "./UserOperation";
+import { AbiCoder, keccak256 } from "ethers";
+import { AddressZero, packAccountGasLimits, packPaymasterData } from "./utils";
+import { PackedUserOperation, UserOperation, address } from "./types";
+import { ethers } from "hardhat";
+
+export async function signUserOp(
+  op: UserOperation,
+  signer: any,
+  entryPoint: address,
+  chainId: number
+): Promise<PackedUserOperation> {
+  const message = getUserOpHash(op, entryPoint, chainId);
+  const signedUserOp = await signer.signMessage(ethers.getBytes(message));
+  const packedUserOp = packUserOp(op);
+  return {
+    ...packedUserOp,
+    signature: signedUserOp,
+  };
+}
+
+export function getUserOpHash(
+  op: UserOperation,
+  entryPoint: string,
+  chainId: number
+): string {
+  const userOpHash = keccak256(encodeUserOp(op));
+  const enc = AbiCoder.defaultAbiCoder().encode(
+    ["bytes32", "address", "uint256"],
+    [userOpHash, entryPoint, chainId]
+  );
+  return keccak256(enc);
+}
 
 export function packUserOp(userOp: UserOperation): PackedUserOperation {
   const accountGasLimits = packAccountGasLimits(
@@ -20,7 +39,7 @@ export function packUserOp(userOp: UserOperation): PackedUserOperation {
   let paymasterAndData = "0x";
   if (userOp.paymaster.length >= 20 && userOp.paymaster !== AddressZero) {
     paymasterAndData = packPaymasterData(
-      userOp.paymaster as string,
+      userOp.paymaster,
       userOp.paymasterVerificationGasLimit,
       userOp.paymasterPostOpGasLimit,
       userOp.paymasterData as string
@@ -39,13 +58,14 @@ export function packUserOp(userOp: UserOperation): PackedUserOperation {
     signature: userOp.signature,
   };
 }
+
 export function encodeUserOp(
   userOp: UserOperation,
   forSignature = true
 ): string {
   const packedUserOp = packUserOp(userOp);
   if (forSignature) {
-    return defaultAbiCoder.encode(
+    return AbiCoder.defaultAbiCoder().encode(
       [
         "address",
         "uint256",
@@ -71,7 +91,7 @@ export function encodeUserOp(
     );
   } else {
     // for the purpose of calculating gas cost encode also signature (and no keccak of bytes)
-    return defaultAbiCoder.encode(
+    return AbiCoder.defaultAbiCoder().encode(
       [
         "address",
         "uint256",
@@ -100,27 +120,14 @@ export function encodeUserOp(
   }
 }
 
-export function getUserOpHash(
-  op: UserOperation,
-  entryPoint: string,
-  chainId: number
-): string {
-  const userOpHash = keccak256(encodeUserOp(op, true));
-  const enc = defaultAbiCoder.encode(
-    ["bytes32", "address", "uint256"],
-    [userOpHash, entryPoint, chainId]
-  );
-  return keccak256(enc);
-}
-
 export const DefaultsForUserOp: UserOperation = {
   sender: AddressZero,
   nonce: 0,
   initCode: "0x",
   callData: "0x",
   callGasLimit: 0,
-  verificationGasLimit: 150000, // default verification gas. will add create2 cost (3200+200*length) if initCode exists
-  preVerificationGas: 21000, // should also cover calldata cost.
+  verificationGasLimit: 1_500_00, // default verification gas. will add create2 cost (3200+200*length) if initCode exists
+  preVerificationGas: 21_000, // should also cover calldata cost.
   maxFeePerGas: 0,
   maxPriorityFeePerGas: 1e9,
   paymaster: AddressZero,
@@ -129,28 +136,3 @@ export const DefaultsForUserOp: UserOperation = {
   paymasterPostOpGasLimit: 0,
   signature: "0x",
 };
-
-export function signUserOp(
-  op: UserOperation,
-  signer: Wallet,
-  entryPoint: string,
-  chainId: number
-): UserOperation {
-  const message = getUserOpHash(op, entryPoint, chainId);
-  const msg1 = Buffer.concat([
-    Buffer.from("\x19Ethereum Signed Message:\n32", "ascii"),
-    Buffer.from(arrayify(message)),
-  ]);
-
-  const sig = ecsign(
-    keccak256_buffer(msg1),
-    Buffer.from(arrayify(signer.privateKey))
-  );
-  // that's equivalent of:  await signer.signMessage(message);
-  // (but without "async"
-  const signedMessage1 = toRpcSig(sig.v, sig.r, sig.s);
-  return {
-    ...op,
-    signature: signedMessage1,
-  };
-}

@@ -8,6 +8,7 @@ import "../interfaces/IAccount.sol";
 import "../interfaces/IEntryPoint.sol";
 import "./Helpers.sol";
 import "./UserOperationLib.sol";
+import "hardhat/console.sol";
 
 /**
  * Basic account implementation.
@@ -54,6 +55,7 @@ abstract contract BaseAccount is IAccount {
     ) external virtual override returns (uint256 validationData) {
         _requireFromEntryPoint();
         validationData = _validateSignature(userOp, userOpHash);
+        console.log(validationData);
         _validateNonce(userOp.nonce);
         _payPrefund(missingAccountFunds);
     }
@@ -103,8 +105,7 @@ abstract contract BaseAccount is IAccount {
      *
      * solhint-disable-next-line no-empty-blocks
      */
-    function _validateNonce(uint256 nonce) internal view virtual {
-    }
+    function _validateNonce(uint256 nonce) internal view virtual {}
 
     /**
      * Sends to the entrypoint (msg.sender) the missing funds for this transaction.
