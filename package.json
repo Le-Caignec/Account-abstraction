@@ -4,8 +4,9 @@
     "clean": "hardhat clean",
     "compile": "npx hardhat clean && npx hardhat compile",
     "deploy": "hardhat run ./deploy/1_deploy_entrypoint_AAF.ts",
-    "start": "hardhat run ./scripts/withoutAggregator/runSimpleUser0p.ts",
-    "start:batchUserOp": "hardhat run ./scripts/withoutAggregator/runBatchUser0p.ts "
+    "start": "hardhat run ./scripts/withoutAggregator/SimpleUser0p.ts",
+    "start:BatchUserOp": "hardhat run ./scripts/withoutAggregator/BatchUser0p.ts ",
+    "start:AggUserOp": "hardhat run ./scripts/withoutAggregator/AggUser0p.ts "
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",

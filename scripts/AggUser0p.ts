@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
-import { deploy } from "../../deploy/1_deploy_entrypoint_AAF";
-import { DefaultsForUserOp, signUserOp } from "../utils/UserOp";
-import { UserOperation } from "../utils/types";
+import { deploy } from "../deploy/1_deploy_entrypoint_AAF";
+import { DefaultsForUserOp, signUserOp } from "./utils/UserOp";
+import { UserOperation } from "./utils/types";
 
 export async function run() {
   const {

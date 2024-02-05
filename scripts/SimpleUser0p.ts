@@ -1,9 +1,9 @@
 import { ethers } from "hardhat";
-import { deploy } from "../../deploy/1_deploy_entrypoint_AAF";
-import { DefaultsForUserOp, signUserOp } from "../utils/UserOp";
-import { UserOperation } from "../utils/types";
+import { deploy } from "../deploy/1_deploy_entrypoint_AAF";
+import { DefaultsForUserOp, signUserOp } from "./utils/UserOp";
+import { UserOperation } from "./utils/types";
 
-export async function runBatchOfTransaction() {
+export async function runSimpleTransaction() {
   const {
     EntryPointAddress,
     AccountAbstractionFactoryAddress,
@@ -32,19 +32,16 @@ export async function runBatchOfTransaction() {
     ),
   ]);
 
-  const innerCallData_1 = TestCounterFactory.interface.encodeFunctionData(
-    "count",
-    []
-  );
-  const innerCallData_2 = TestCounterFactory.interface.encodeFunctionData(
+  const innerCallData = TestCounterFactory.interface.encodeFunctionData(
     "count",
     []
   );
 
-  const callData = AccountAbstraction.interface.encodeFunctionData(
-    "executeBatch",
-    [[TestCounterAddress, TestCounterAddress], [0, 0], [innerCallData_1,innerCallData_2]]
-  );
+  const callData = AccountAbstraction.interface.encodeFunctionData("execute", [
+    TestCounterAddress,
+    0,
+    innerCallData,
+  ]);
 
   // use the create2 to
   let sender;
@@ -67,7 +64,7 @@ export async function runBatchOfTransaction() {
     nonce,
     initCode,
     callData,
-    callGasLimit: 500_00,
+    callGasLimit: 300_00,
     verificationGasLimit: 2_100_00,
   };
 
@@ -94,7 +91,7 @@ export async function runBatchOfTransaction() {
   console.log("Success 🏎️");
 }
 
-runBatchOfTransaction().catch((error) => {
+runSimpleTransaction().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
