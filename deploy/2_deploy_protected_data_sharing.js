@@ -27,8 +27,9 @@ export async function deployProtectedDataSharing() {
 
   const proxyAddress = await proxy.getAddress();
   console.log("==ProtectedDataSharing==", proxyAddress);
-
-  return {
-    ProtectedDataSharingAddress: proxyAddress,
-  };
 }
+
+deployProtectedDataSharing().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

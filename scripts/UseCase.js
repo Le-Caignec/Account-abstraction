@@ -1,6 +1,4 @@
 import pkg from "hardhat";
-import { deploy } from "../deploy/1_deploy_entrypoint_AAF.js";
-import { deployProtectedDataSharing } from "../deploy/2_deploy_protected_data_sharing.js";
 import { DefaultsForUserOp, signUserOp } from "./utils/UserOp.js";
 import { POCO_PROTECTED_DATA_REGISTRY_ADDRESS } from "../config/config.js";
 import { createDatasetFor } from "./singleFunction/dataset.js";
@@ -8,10 +6,6 @@ import { createAppFor } from "./singleFunction/app.js";
 const { ethers } = pkg;
 
 export async function runBatchOfTransaction() {
-  const { EntryPointAddress, AccountAbstractionFactoryAddress } =
-    await deploy();
-  const { ProtectedDataSharingAddress } = await deployProtectedDataSharing();
-
   const EntryPointContract = await ethers.getContractAt(
     "EntryPoint",
     EntryPointAddress
@@ -38,7 +32,7 @@ export async function runBatchOfTransaction() {
     AccountAbstractionFactoryAddress,
     FactoryAccountAbstractionContract.interface.encodeFunctionData(
       "createAccount",
-      [AA_Owner.address, ethers.id("salt")]
+      [AA_Owner.address, ethers.id(Math.random().toString())]
     ),
   ]);
 
@@ -93,50 +87,45 @@ export async function runBatchOfTransaction() {
   //   ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
 
   //batch the inner CallData
-  const callData = AccountAbstraction.interface.encodeFunctionData(
-    "executeBatch",
-    [
-      [ProtectedDataSharingAddress, POCO_PROTECTED_DATA_REGISTRY_ADDRESS],
-      [0, 0],
-      [innerCallData_2, innerCallData_4],
-    ]
-  );
-
-  const nonce = await EntryPointContract.getNonce(sender, 0);
-
-  let userOp = {
-    ...DefaultsForUserOp,
-    sender,
-    nonce,
-    initCode,
-    callData,
-    callGasLimit: 6_000_00,
-    verificationGasLimit: 6_000_00,
-    preVerificationGas: 6_000_00,
-  };
-
-  const packedSignedUserOperation = await signUserOp(
-    userOp,
-    AA_Owner,
-    EntryPointAddress,
-    Number(chainId)
-  );
-  console.log("packedSignedUserOperation", packedSignedUserOperation);
-  await EntryPointContract.connect(AA_Owner).depositTo(sender, {
-    value: ethers.parseEther("0.1"),
-  });
-
-  // second args is the beneficiary address => should be the bundler address that will take a cut
-  await EntryPointContract.handleOps(
-    [packedSignedUserOperation],
-    bundler.address
-  );
-
-  // console.log(
-  //   await ProtectedDataSharingFactory.attach(
-  //     ProtectedDataSharingAddress
-  //   ).ownerOf(0)
+  // const callData = AccountAbstraction.interface.encodeFunctionData(
+  //   "executeBatch",
+  //   [
+  //     [ProtectedDataSharingAddress, POCO_PROTECTED_DATA_REGISTRY_ADDRESS],
+  //     [0, 0],
+  //     [innerCallData_2, innerCallData_4],
+  //   ]
   // );
+
+  // const nonce = await EntryPointContract.getNonce(sender, 0);
+
+  // let userOp = {
+  //   ...DefaultsForUserOp,
+  //   sender,
+  //   nonce,
+  //   initCode,
+  //   callData,
+  //   callGasLimit: 6_000_00,
+  //   verificationGasLimit: 6_000_00,
+  //   preVerificationGas: 6_000_00,
+  // };
+
+  // const packedSignedUserOperation = await signUserOp(
+  //   userOp,
+  //   AA_Owner,
+  //   EntryPointAddress,
+  //   Number(chainId)
+  // );
+  // console.log("packedSignedUserOperation", packedSignedUserOperation);
+  // await EntryPointContract.connect(AA_Owner).depositTo(sender, {
+  //   value: ethers.parseEther("0.1"),
+  // });
+
+  // // second args is the beneficiary address => should be the bundler address that will take a cut
+  // await EntryPointContract.handleOps(
+  //   [packedSignedUserOperation],
+  //   bundler.address
+  // );
+
   console.log("Success 🏎️");
 }
 
