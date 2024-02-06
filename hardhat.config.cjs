@@ -2,7 +2,7 @@ require("@nomicfoundation/hardhat-toolbox");
 require("@openzeppelin/hardhat-upgrades");
 require("dotenv").config();
 
-const { WALLET_BUNDLER, WALLET_AA, ETHERSCAN_API_KEY } = process.env;
+const { WALLET_BUNDLER, WALLET_AA, ETHERSCAN_API_KEY, INFURA_ID } = process.env;
 
 /**
  * @type import('hardhat/config').HardhatUserConfig

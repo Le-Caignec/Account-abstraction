@@ -1,8 +1,7 @@
-import { Wallet } from 'ethers';
-import { IExec, utils } from 'iexec';
+import { IExec, utils } from "iexec";
 
 const createWorkerpool = async (rpc) => {
-  const workerpoolOwnerWallet = Wallet.createRandom();
+  const [workerpoolOwnerWallet] = await ethers.getSigners();
   const iexecWorkerpoolOwner = new IExec({
     ethProvider: utils.getSignerFromPrivateKey(
       rpc,
@@ -12,7 +11,7 @@ const createWorkerpool = async (rpc) => {
   const { address: workerpoolAddress } =
     await iexecWorkerpoolOwner.workerpool.deployWorkerpool({
       owner: workerpoolOwnerWallet.address,
-      description: 'Test workerpool',
+      description: "Test workerpool",
     });
   return { iexecWorkerpoolOwner, workerpoolAddress };
 };
@@ -25,7 +24,7 @@ const createWorkerpoolOrder = async (
     .createWorkerpoolorder({
       workerpool: workerpoolAddress,
       category: 0,
-      tag: ['tee', 'scone'],
+      tag: ["tee", "scone"],
       volume: 100,
     })
     .then((order) => iexecWorkerpoolOwner.order.signWorkerpoolorder(order));

@@ -9,7 +9,7 @@
     "start": "hardhat run ./scripts/withoutAggregator/SimpleUser0p.js",
     "start:BatchUserOp": "hardhat run ./scripts/BatchUser0p.js ",
     "start:AggUserOp": "hardhat run ./scripts/AggUser0p.js ",
-    "start:UseCase": "hardhat run ./scripts/UseCase.js "
+    "start:UseCase": "hardhat run ./scripts/UseCase.js --network goerli"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
@@ -21,7 +21,7 @@
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.1",
     "@openzeppelin/contracts-upgradeable": "^5.0.1",
-    "@openzeppelin/hardhat-upgrades": "^3.0.2",
+    "@openzeppelin/hardhat-upgrades": "^3.0.3",
     "dotenv": "^16.4.1",
     "ethers": "^6.10.0",
     "iexec": "^8.5.2"

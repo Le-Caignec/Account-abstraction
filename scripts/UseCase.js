@@ -5,6 +5,12 @@ import { createDatasetFor } from "./singleFunction/dataset.js";
 import { createAppFor } from "./singleFunction/app.js";
 const { ethers } = pkg;
 
+const EntryPointAddress = "0x7C035701AB28Df8FfE6c85DbBe024c3b21FC9a08"; //verify
+const AccountAbstractionFactoryAddress =
+  "0x18b96a76fAf4E3D704A3B6780006A70169df6203"; //verify
+const ProtectedDataSharingAddress =
+  "0x2918e4f9a88DC48F781b276944c23aDa6d5d8513"; //verify implem 0xc94cb8c99ffc598932ccda92fd2e1e8b54bbc854
+
 export async function runBatchOfTransaction() {
   const EntryPointContract = await ethers.getContractAt(
     "EntryPoint",
@@ -44,7 +50,7 @@ export async function runBatchOfTransaction() {
     // catch the revert custom error : error SenderAddressResult(address sender);
     sender = EntryPointContract.interface.decodeErrorResult(
       "SenderAddressResult",
-      error.data.data
+      error.data
     )[0];
     console.log("==AA Address==", sender);
   }
@@ -59,6 +65,7 @@ export async function runBatchOfTransaction() {
   const protectedDataTokenId = ethers
     .getBigInt(protectedDataAddress.toLowerCase())
     .toString();
+  console.log(protectedDataTokenId);
   // 4_make_an_approval
   const innerCallData_4 = ProtectedDataRegistry.interface.encodeFunctionData(
     "approve",
