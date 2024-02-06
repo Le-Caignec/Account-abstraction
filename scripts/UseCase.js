@@ -60,78 +60,104 @@ export async function runBatchOfTransaction() {
     ProtectedDataSharingFactory.interface.encodeFunctionData(
       "createCollection"
     );
-  // 3_create_a_protectedData
+  const collectionTokenId = 0; // check what is the last collectionTokenID
+
+  // create_a_protectedData
   const protectedDataAddress = await createDatasetFor(sender, rpcURL);
   const protectedDataTokenId = ethers
     .getBigInt(protectedDataAddress.toLowerCase())
     .toString();
-  console.log(protectedDataTokenId);
-  // 4_make_an_approval
-  const innerCallData_4 = ProtectedDataRegistry.interface.encodeFunctionData(
+
+  // 3_make_an_approval
+  const innerCallData_3 = ProtectedDataRegistry.interface.encodeFunctionData(
     "approve",
     [ProtectedDataSharingAddress, protectedDataTokenId]
   );
-  console.log(
-    await ProtectedDataRegistry.ownerOf(protectedDataTokenId),
-    sender
+
+  // create_an_app
+  const appAddress = await createAppFor(sender, rpcURL);
+
+  // 4_add_protectedData_to_collection
+  const innerCallData_4 =
+    ProtectedDataSharingFactory.interface.encodeFunctionData(
+      "addProtectedDataToCollection",
+      [collectionTokenId, protectedDataAddress, appAddress]
+    );
+
+  // 5_set_subscription_params
+  const subscriptionParams = {
+    price: subscriptionPrice,
+    duration: 1_500,
+  };
+  const innerCallData_5 =
+    ProtectedDataSharingFactory.interface.encodeFunctionData(
+      "setSubscriptionParams",
+      [collectionTokenId, subscriptionParams]
+    );
+
+  // 6_set_protectedData_to_subscription
+  const innerCallData_6 =
+    ProtectedDataSharingFactory.interface.encodeFunctionData(
+      "setProtectedDataToSubscription",
+      [collectionTokenId, protectedDataAddress]
+    );
+
+  // batch the inner CallData
+  const callData = AccountAbstraction.interface.encodeFunctionData(
+    "executeBatch",
+    [
+      [
+        ProtectedDataSharingAddress,
+        POCO_PROTECTED_DATA_REGISTRY_ADDRESS,
+        ProtectedDataSharingAddress,
+        ProtectedDataSharingAddress,
+        ProtectedDataSharingAddress,
+      ],
+      [0, 0, 0, 0, 0],
+      [
+        innerCallData_2,
+        innerCallData_3,
+        innerCallData_4,
+        innerCallData_5,
+        innerCallData_6,
+      ],
+    ]
   );
 
-  // const appAddress = await createAppFor(sender, rpcURL);
-  // // 5_create_an_app
-  // const innerCallData_5 =
-  //   ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
-  // // 6_transfer_App_ownership_to_the_protectedDataSharing_contract
-  // const innerCallData_6 =
-  //   ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
-  // // 7_add_protectedData_to_collection
-  // const innerCallData_7 =
-  //   ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
-  // // 8_set_subscription_params
-  // const innerCallData_8 =
-  //   ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
-  // // 9_set_subscription_params
-  // const innerCallData_9 =
-  //   ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
+  const nonce = await EntryPointContract.getNonce(sender, 0);
 
-  //batch the inner CallData
-  // const callData = AccountAbstraction.interface.encodeFunctionData(
-  //   "executeBatch",
-  //   [
-  //     [ProtectedDataSharingAddress, POCO_PROTECTED_DATA_REGISTRY_ADDRESS],
-  //     [0, 0],
-  //     [innerCallData_2, innerCallData_4],
-  //   ]
-  // );
+  let userOp = {
+    ...DefaultsForUserOp,
+    sender,
+    nonce,
+    initCode,
+    callData,
+    callGasLimit: 6_000_00,
+    verificationGasLimit: 6_000_00,
+    preVerificationGas: 6_000_00,
+  };
 
-  // const nonce = await EntryPointContract.getNonce(sender, 0);
+  const packedSignedUserOperation = await signUserOp(
+    userOp,
+    AA_Owner,
+    EntryPointAddress,
+    Number(chainId)
+  );
+  console.log("packedSignedUserOperation", packedSignedUserOperation);
+  const depositTx = await EntryPointContract.connect(AA_Owner).depositTo(
+    sender,
+    {
+      value: ethers.parseEther("0.1"),
+    }
+  );
+  await depositTx.wait();
 
-  // let userOp = {
-  //   ...DefaultsForUserOp,
-  //   sender,
-  //   nonce,
-  //   initCode,
-  //   callData,
-  //   callGasLimit: 6_000_00,
-  //   verificationGasLimit: 6_000_00,
-  //   preVerificationGas: 6_000_00,
-  // };
-
-  // const packedSignedUserOperation = await signUserOp(
-  //   userOp,
-  //   AA_Owner,
-  //   EntryPointAddress,
-  //   Number(chainId)
-  // );
-  // console.log("packedSignedUserOperation", packedSignedUserOperation);
-  // await EntryPointContract.connect(AA_Owner).depositTo(sender, {
-  //   value: ethers.parseEther("0.1"),
-  // });
-
-  // // second args is the beneficiary address => should be the bundler address that will take a cut
-  // await EntryPointContract.handleOps(
-  //   [packedSignedUserOperation],
-  //   bundler.address
-  // );
+  // second args is the beneficiary address => should be the bundler address that will take a cut
+  const handleOpTx = await EntryPointContract.handleOps(
+    [packedSignedUserOperation],
+    bundler.address
+  );
+  await handleOpTx.wait();
 
   console.log("Success 🏎️");
 }

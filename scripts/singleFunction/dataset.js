@@ -1,13 +1,11 @@
 import { IExec, utils } from "iexec";
 
 const createDatasetFor = async (owner, rpc) => {
-  const [datasetOwnerWallet] = await ethers.getSigners();
-  console.log(datasetOwnerWallet);
-
+  const datasetOwnerWallet = process.env.WALLET_AA;
   const iexecDatasetOwner = new IExec({
     ethProvider: utils.getSignerFromPrivateKey(
       rpc,
-      datasetOwnerWallet.privateKey
+      datasetOwnerWallet
     ),
   });
 

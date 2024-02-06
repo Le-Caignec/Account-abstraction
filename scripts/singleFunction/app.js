@@ -1,9 +1,9 @@
 import { IExec, utils } from "iexec";
 
 const createAppFor = async (owner, rpc) => {
-  const [appOwnerWallet] = await ethers.getSigners();
+  const appOwnerWallet = process.env.WALLET_AA;
   const iexecAppOwner = new IExec({
-    ethProvider: utils.getSignerFromPrivateKey(rpc, appOwnerWallet.privateKey),
+    ethProvider: utils.getSignerFromPrivateKey(rpc, appOwnerWallet),
   });
   const { address: appAddress } = await iexecAppOwner.app.deployApp({
     owner,

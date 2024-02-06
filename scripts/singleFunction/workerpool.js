@@ -1,11 +1,11 @@
 import { IExec, utils } from "iexec";
 
 const createWorkerpool = async (rpc) => {
-  const [workerpoolOwnerWallet] = await ethers.getSigners();
+  const workerpoolOwnerWallet = process.env.WALLET_AA;
   const iexecWorkerpoolOwner = new IExec({
     ethProvider: utils.getSignerFromPrivateKey(
       rpc,
-      workerpoolOwnerWallet.privateKey
+      workerpoolOwnerWallet
     ),
   });
   const { address: workerpoolAddress } =
