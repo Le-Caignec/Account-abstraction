@@ -26,7 +26,7 @@ export async function runBatchOfTransaction() {
     AccountAbstractionFactoryAddress,
     FactoryAccountAbstractionContract.interface.encodeFunctionData(
       "createAccount",
-      [AA_Owner.address, ethers.id("salt")]
+      [AA_Owner.address, ethers.id(Math.random().toString())]
     ),
   ]);
   const innerCallData_1 =
@@ -76,16 +76,17 @@ export async function runBatchOfTransaction() {
     Number(chainId)
   );
   console.log("packedSignedUserOperation", packedSignedUserOperation);
-  await EntryPointContract.connect(AA_Owner).depositTo(sender, {
+  const tx = await EntryPointContract.connect(AA_Owner).depositTo(sender, {
     value: ethers.parseEther("0.001"),
   });
-
+  await tx.wait();
   // second args is the beneficiary address => should be the bundler address that will take a cut
-  await EntryPointContract.handleOps(
+  const handleOpsTx = await EntryPointContract.handleOps(
     [packedSignedUserOperation],
     bundler.address
   );
-
+  await handleOpsTx.wait();
+  
   console.log(
     await TestCounterFactory.attach(TestCounterAddress).counters(sender)
   );
