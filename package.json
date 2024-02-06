@@ -4,11 +4,9 @@
     "clean": "hardhat clean",
     "compile": "npx hardhat clean && npx hardhat compile",
     "deploy:endpoint": "hardhat run ./deploy/1_deploy_entrypoint_AAF.ts",
-    "deploy:protectedDataSharing": "hardhat run ./deploy/2_deploy_protected_data_sharing.ts",
     "start": "hardhat run ./scripts/withoutAggregator/SimpleUser0p.ts",
     "start:BatchUserOp": "hardhat run ./scripts/BatchUser0p.ts ",
-    "start:AggUserOp": "hardhat run ./scripts/AggUser0p.ts ",
-    "start:UseCase": "hardhat run ./scripts/UseCase.ts "
+    "start:AggUserOp": "hardhat run ./scripts/AggUser0p.ts "
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
@@ -19,8 +17,6 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.1",
-    "@openzeppelin/contracts-upgradeable": "^5.0.1",
-    "@openzeppelin/hardhat-upgrades": "^3.0.2",
     "dotenv": "^16.4.1",
     "typescript": "^5.3.3"
   }
