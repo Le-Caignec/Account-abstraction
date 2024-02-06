@@ -6,12 +6,6 @@ import "dotenv/config";
 const { WALLET_AA, WALLET_BUNDLER, INFURA_ID, ETHERSCAN_API_KEY } =
   process.env;
 
-const bellecourBase = {
-  gasPrice: 0,
-  blockGasLimit: 6_700_000,
-  hardfork: "berlin",
-};
-
 const config: HardhatUserConfig = {
   defaultNetwork: "localhost",
   solidity: {
