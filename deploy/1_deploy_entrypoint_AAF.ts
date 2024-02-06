@@ -23,10 +23,9 @@ export async function deploy() {
   const testCounterContract = await TestCounterFactory.deploy();
   const testCounterAddress = await testCounterContract.getAddress();
   console.log("==TestCounter==", await testCounterContract.getAddress());
-
-  return {
-    EntryPointAddress: entryPointAddress,
-    AccountAbstractionFactoryAddress: simpleAccountFactoryAddress,
-    TestCounterAddress: testCounterAddress,
-  };
 }
+
+deploy().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

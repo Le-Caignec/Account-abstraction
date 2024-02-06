@@ -1,8 +1,10 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import "@nomicfoundation/hardhat-verify";
 import "dotenv/config";
 
-const { WALLET_PRIVATE_KEY, INFURA_ID } = process.env;
+const { WALLET_AA, WALLET_BUNDLER, INFURA_ID, ETHERSCAN_API_KEY } =
+  process.env;
 
 const bellecourBase = {
   gasPrice: 0,
@@ -23,10 +25,16 @@ const config: HardhatUserConfig = {
     ],
   },
   networks: {
-    sepolia: {
-      url: `https://sepolia.infura.io/v3/${INFURA_ID}`,
-      accounts: WALLET_PRIVATE_KEY ? [WALLET_PRIVATE_KEY] : [],
+    goerli: {
+      url: `https://goerli.infura.io/v3/${INFURA_ID}`,
+      accounts: [WALLET_BUNDLER!, WALLET_AA!],
     },
+  },
+  etherscan: {
+    apiKey: ETHERSCAN_API_KEY,
+  },
+  sourcify: {
+    enabled: true,
   },
 };
 
