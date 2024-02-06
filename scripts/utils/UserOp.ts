@@ -136,3 +136,10 @@ export const DefaultsForUserOp: UserOperation = {
   paymasterPostOpGasLimit: 0,
   signature: "0x",
 };
+
+export function encodeUserOpsPerAggregator(
+  userOp: UserOperation[],
+  forSignature = true
+): any {
+  const userOpHash = encodeUserOp(userOp[0]);
+}
