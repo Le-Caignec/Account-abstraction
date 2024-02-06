@@ -5,7 +5,7 @@ import {
   POCO_PROXY_ADDRESS,
 } from "../config/config";
 
-async function main() {
+export async function deployProtectedDataSharing() {
   console.log("Starting deployment...");
   const [deployer] = await ethers.getSigners();
   console.log("Deploying contracts with the account:", deployer.address);
@@ -27,14 +27,9 @@ async function main() {
   await proxy.waitForDeployment();
 
   const proxyAddress = await proxy.getAddress();
-  console.log(`Proxy address: ${proxyAddress}`);
-  console.log(
-    "Implementation address (ProtectedDataSharing.sol):",
-    await upgrades.erc1967.getImplementationAddress(proxyAddress)
-  );
-}
+  console.log("==ProtectedDataSharing==", proxyAddress);
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+  return {
+    ProtectedDataSharingAddress: proxyAddress,
+  };
+}

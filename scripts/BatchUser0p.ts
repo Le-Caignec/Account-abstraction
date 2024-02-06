@@ -32,18 +32,18 @@ export async function runBatchOfTransaction() {
     ),
   ]);
 
-  const innerCallData_1 = TestCounterFactory.interface.encodeFunctionData(
-    "count",
-    []
-  );
-  const innerCallData_2 = TestCounterFactory.interface.encodeFunctionData(
-    "count",
-    []
-  );
+  const innerCallData_1 =
+    TestCounterFactory.interface.encodeFunctionData("count");
+  const innerCallData_2 =
+    TestCounterFactory.interface.encodeFunctionData("count");
 
   const callData = AccountAbstraction.interface.encodeFunctionData(
     "executeBatch",
-    [[TestCounterAddress, TestCounterAddress], [0, 0], [innerCallData_1,innerCallData_2]]
+    [
+      [TestCounterAddress, TestCounterAddress],
+      [0, 0],
+      [innerCallData_1, innerCallData_2],
+    ]
   );
 
   // use the create2 to

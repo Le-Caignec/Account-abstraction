@@ -6,8 +6,8 @@
     "deploy:endpoint": "hardhat run ./deploy/1_deploy_entrypoint_AAF.ts",
     "deploy:protectedDataSharing": "hardhat run ./deploy/2_deploy_protected_data_sharing.ts",
     "start": "hardhat run ./scripts/withoutAggregator/SimpleUser0p.ts",
-    "start:BatchUserOp": "hardhat run ./scripts/withoutAggregator/BatchUser0p.ts ",
-    "start:AggUserOp": "hardhat run ./scripts/withoutAggregator/AggUser0p.ts "
+    "start:BatchUserOp": "hardhat run ./scripts/BatchUser0p.ts ",
+    "start:AggUserOp": "hardhat run ./scripts/AggUser0p.ts "
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",

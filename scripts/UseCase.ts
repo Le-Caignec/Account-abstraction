@@ -1,14 +1,13 @@
 import { ethers } from "hardhat";
 import { deploy } from "../deploy/1_deploy_entrypoint_AAF";
+import { deployProtectedDataSharing } from "../deploy/2_deploy_protected_data_sharing";
 import { DefaultsForUserOp, signUserOp } from "./utils/UserOp";
 import { UserOperation } from "./utils/types";
 
-export async function runSimpleTransaction() {
-  const {
-    EntryPointAddress,
-    AccountAbstractionFactoryAddress,
-    TestCounterAddress,
-  } = await deploy();
+export async function runBatchOfTransaction() {
+  const { EntryPointAddress, AccountAbstractionFactoryAddress } =
+    await deploy();
+  const { ProtectedDataSharingAddress } = await deployProtectedDataSharing();
 
   const EntryPointContract = await ethers.getContractAt(
     "EntryPoint",
@@ -19,11 +18,13 @@ export async function runSimpleTransaction() {
     AccountAbstractionFactoryAddress
   );
   const AccountAbstraction = await ethers.getContractFactory("SimpleAccount");
-  const TestCounterFactory = await ethers.getContractFactory("TestCounter");
-
+  const ProtectedDataSharingFactory = await ethers.getContractFactory(
+    "ProtectedDataSharing"
+  );
   const chainId = (await ethers.provider.getNetwork()).chainId;
   const [bundler, AA_Owner] = await ethers.getSigners();
 
+  // 1_create_AA
   const initCode = ethers.concat([
     AccountAbstractionFactoryAddress,
     FactoryAccountAbstractionContract.interface.encodeFunctionData(
@@ -32,14 +33,42 @@ export async function runSimpleTransaction() {
     ),
   ]);
 
-  const innerCallData =
-    TestCounterFactory.interface.encodeFunctionData("count");
+  // 2_create_a_collection
+  const innerCallData_2 =
+    ProtectedDataSharingFactory.interface.encodeFunctionData(
+      "createCollection"
+    );
+  // 3_create_a_protectedData
+  const innerCallData_3 =
+    ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
+  // 4_make_an_approval
+  const innerCallData_4 =
+    ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
+  // 5_create_an_app
+  const innerCallData_5 =
+    ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
+  // 6_transfer_App_ownership_to_the_protectedDataSharing_contract
+  const innerCallData_6 =
+    ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
+  // 7_add_protectedData_to_collection
+  const innerCallData_7 =
+    ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
+  // 8_set_subscription_params
+  const innerCallData_8 =
+    ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
+  // 9_set_subscription_params
+  const innerCallData_9 =
+    ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
 
-  const callData = AccountAbstraction.interface.encodeFunctionData("execute", [
-    TestCounterAddress,
-    0,
-    innerCallData,
-  ]);
+  //batch the inner CallData
+  const callData = AccountAbstraction.interface.encodeFunctionData(
+    "executeBatch",
+    [
+      [TestCounterAddress, TestCounterAddress],
+      [0, 0],
+      [innerCallData_1, innerCallData_2],
+    ]
+  );
 
   // use the create2 to
   let sender;
@@ -62,7 +91,7 @@ export async function runSimpleTransaction() {
     nonce,
     initCode,
     callData,
-    callGasLimit: 300_00,
+    callGasLimit: 500_00,
     verificationGasLimit: 2_100_00,
   };
 
@@ -89,7 +118,7 @@ export async function runSimpleTransaction() {
   console.log("Success 🏎️");
 }
 
-runSimpleTransaction().catch((error) => {
+runBatchOfTransaction().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
