@@ -1,8 +1,11 @@
-import { ethers } from "hardhat";
-import { deploy } from "../deploy/1_deploy_entrypoint_AAF";
-import { deployProtectedDataSharing } from "../deploy/2_deploy_protected_data_sharing";
-import { DefaultsForUserOp, signUserOp } from "./utils/UserOp";
-import { UserOperation } from "./utils/types";
+import pkg from "hardhat";
+import { deploy } from "../deploy/1_deploy_entrypoint_AAF.js";
+import { deployProtectedDataSharing } from "../deploy/2_deploy_protected_data_sharing.js";
+import { DefaultsForUserOp, signUserOp } from "./utils/UserOp.js";
+import { POCO_PROTECTED_DATA_REGISTRY_ADDRESS } from "../config/config.js";
+import { createDatasetFor } from "./singleFunction/dataset.js";
+import { createAppFor } from "./singleFunction/app.js";
+const { ethers } = pkg;
 
 export async function runBatchOfTransaction() {
   const { EntryPointAddress, AccountAbstractionFactoryAddress } =
@@ -21,9 +24,15 @@ export async function runBatchOfTransaction() {
   const ProtectedDataSharingFactory = await ethers.getContractFactory(
     "ProtectedDataSharing"
   );
-  const chainId = (await ethers.provider.getNetwork()).chainId;
-  const [bundler, AA_Owner] = await ethers.getSigners();
+  const ProtectedDataRegistry = await ethers.getContractAt(
+    "IRegistry",
+    POCO_PROTECTED_DATA_REGISTRY_ADDRESS
+  );
 
+  const chainId = (await ethers.provider.getNetwork()).chainId;
+  const rpcURL = hre.network.config.url;
+
+  const [bundler, AA_Owner] = await ethers.getSigners();
   // 1_create_AA
   const initCode = ethers.concat([
     AccountAbstractionFactoryAddress,
@@ -33,17 +42,40 @@ export async function runBatchOfTransaction() {
     ),
   ]);
 
+  // use the create2 to determine the AA address
+  let sender;
+  try {
+    await EntryPointContract.getSenderAddress(initCode);
+  } catch (error) {
+    // catch the revert custom error : error SenderAddressResult(address sender);
+    sender = EntryPointContract.interface.decodeErrorResult(
+      "SenderAddressResult",
+      error.data.data
+    )[0];
+    console.log("==AA Address==", sender);
+  }
+
   // 2_create_a_collection
   const innerCallData_2 =
     ProtectedDataSharingFactory.interface.encodeFunctionData(
       "createCollection"
     );
-  // // 3_create_a_protectedData
-  // const innerCallData_3 =
-  //   ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
-  // // 4_make_an_approval
-  // const innerCallData_4 =
-  //   ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
+  // 3_create_a_protectedData
+  const protectedDataAddress = await createDatasetFor(sender, rpcURL);
+  const protectedDataTokenId = ethers
+    .getBigInt(protectedDataAddress.toLowerCase())
+    .toString();
+  // 4_make_an_approval
+  const innerCallData_4 = ProtectedDataRegistry.interface.encodeFunctionData(
+    "approve",
+    [ProtectedDataSharingAddress, protectedDataTokenId]
+  );
+  console.log(
+    await ProtectedDataRegistry.ownerOf(protectedDataTokenId),
+    sender
+  );
+
+  // const appAddress = await createAppFor(sender, rpcURL);
   // // 5_create_an_app
   // const innerCallData_5 =
   //   ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
@@ -63,32 +95,24 @@ export async function runBatchOfTransaction() {
   //batch the inner CallData
   const callData = AccountAbstraction.interface.encodeFunctionData(
     "executeBatch",
-    [[ProtectedDataSharingAddress], [0], [innerCallData_2]]
+    [
+      [ProtectedDataSharingAddress, POCO_PROTECTED_DATA_REGISTRY_ADDRESS],
+      [0, 0],
+      [innerCallData_2, innerCallData_4],
+    ]
   );
-
-  // use the create2 to
-  let sender;
-  try {
-    await EntryPointContract.getSenderAddress(initCode);
-  } catch (error: any) {
-    // catch the revert custom error : error SenderAddressResult(address sender);
-    sender = EntryPointContract.interface.decodeErrorResult(
-      "SenderAddressResult",
-      error.data.data
-    )[0];
-    console.log("==AA Address==", sender);
-  }
 
   const nonce = await EntryPointContract.getNonce(sender, 0);
 
-  let userOp: UserOperation = {
+  let userOp = {
     ...DefaultsForUserOp,
     sender,
     nonce,
     initCode,
     callData,
-    callGasLimit: 3_000_00,
-    verificationGasLimit: 3_100_00,
+    callGasLimit: 6_000_00,
+    verificationGasLimit: 6_000_00,
+    preVerificationGas: 6_000_00,
   };
 
   const packedSignedUserOperation = await signUserOp(
@@ -108,11 +132,11 @@ export async function runBatchOfTransaction() {
     bundler.address
   );
 
-  console.log(
-    await ProtectedDataSharingFactory.attach(
-      ProtectedDataSharingAddress
-    )._balances(sender)
-  );
+  // console.log(
+  //   await ProtectedDataSharingFactory.attach(
+  //     ProtectedDataSharingAddress
+  //   ).ownerOf(0)
+  // );
   console.log("Success 🏎️");
 }
 

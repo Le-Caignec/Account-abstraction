@@ -1,9 +1,10 @@
-import { ethers, upgrades } from "hardhat";
+import pkg from "hardhat";
+const { ethers, upgrades } = pkg;
 import {
   POCO_APP_REGISTRY_ADDRESS,
   POCO_PROTECTED_DATA_REGISTRY_ADDRESS,
   POCO_PROXY_ADDRESS,
-} from "../config/config";
+} from "../config/config.js";
 
 export async function deployProtectedDataSharing() {
   const [deployer] = await ethers.getSigners();

@@ -1,4 +1,5 @@
-import { ethers } from "hardhat";
+import pkg from "hardhat";
+const { ethers } = pkg;
 
 export async function deploy() {
   // deploy EntryPoint

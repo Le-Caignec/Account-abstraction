@@ -1,14 +1,13 @@
 import { AbiCoder, keccak256 } from "ethers";
-import { AddressZero, packAccountGasLimits, packPaymasterData } from "./utils";
-import { PackedUserOperation, UserOperation, address } from "./types";
-import { ethers } from "hardhat";
+import {
+  AddressZero,
+  packAccountGasLimits,
+  packPaymasterData,
+} from "./utils.js";
+import pkg from "hardhat";
+const { ethers } = pkg;
 
-export async function signUserOp(
-  op: UserOperation,
-  signer: any,
-  entryPoint: address,
-  chainId: number
-): Promise<PackedUserOperation> {
+export async function signUserOp(op, signer, entryPoint, chainId) {
   const message = getUserOpHash(op, entryPoint, chainId);
   const signedUserOp = await signer.signMessage(ethers.getBytes(message));
   const packedUserOp = packUserOp(op);
@@ -18,11 +17,7 @@ export async function signUserOp(
   };
 }
 
-export function getUserOpHash(
-  op: UserOperation,
-  entryPoint: string,
-  chainId: number
-): string {
+export function getUserOpHash(op, entryPoint, chainId) {
   const userOpHash = keccak256(encodeUserOp(op));
   const enc = AbiCoder.defaultAbiCoder().encode(
     ["bytes32", "address", "uint256"],
@@ -31,7 +26,7 @@ export function getUserOpHash(
   return keccak256(enc);
 }
 
-export function packUserOp(userOp: UserOperation): PackedUserOperation {
+export function packUserOp(userOp) {
   const accountGasLimits = packAccountGasLimits(
     userOp.verificationGasLimit,
     userOp.callGasLimit
@@ -42,7 +37,7 @@ export function packUserOp(userOp: UserOperation): PackedUserOperation {
       userOp.paymaster,
       userOp.paymasterVerificationGasLimit,
       userOp.paymasterPostOpGasLimit,
-      userOp.paymasterData as string
+      userOp.paymasterData
     );
   }
   return {
@@ -59,10 +54,7 @@ export function packUserOp(userOp: UserOperation): PackedUserOperation {
   };
 }
 
-export function encodeUserOp(
-  userOp: UserOperation,
-  forSignature = true
-): string {
+export function encodeUserOp(userOp, forSignature = true) {
   const packedUserOp = packUserOp(userOp);
   if (forSignature) {
     return AbiCoder.defaultAbiCoder().encode(
@@ -120,7 +112,7 @@ export function encodeUserOp(
   }
 }
 
-export const DefaultsForUserOp: UserOperation = {
+export const DefaultsForUserOp = {
   sender: AddressZero,
   nonce: 0,
   initCode: "0x",
@@ -137,9 +129,6 @@ export const DefaultsForUserOp: UserOperation = {
   signature: "0x",
 };
 
-export function encodeUserOpsPerAggregator(
-  userOp: UserOperation[],
-  forSignature = true
-): any {
+export function encodeUserOpsPerAggregator(userOp, forSignature = true) {
   const userOpHash = encodeUserOp(userOp[0]);
 }

@@ -1,7 +1,6 @@
 import { ethers } from "hardhat";
 import { deploy } from "../deploy/1_deploy_entrypoint_AAF";
 import { DefaultsForUserOp, signUserOp } from "./utils/UserOp";
-import { UserOperation } from "./utils/types";
 
 export async function run() {
   const {
@@ -49,7 +48,7 @@ export async function run() {
   let sender_1;
   try {
     await EntryPointContract.getSenderAddress(initCode_1);
-  } catch (error: any) {
+  } catch (error) {
     // catch the revert custom error : error SenderAddressResult(address sender);
     sender_1 = EntryPointContract.interface.decodeErrorResult(
       "SenderAddressResult",
@@ -60,7 +59,7 @@ export async function run() {
 
   const nonce_1 = await EntryPointContract.getNonce(sender_1, 0);
 
-  let userOp_1: UserOperation = {
+  let userOp_1 = {
     ...DefaultsForUserOp,
     sender: sender_1,
     nonce: nonce_1,
@@ -106,7 +105,7 @@ export async function run() {
   let sender_2;
   try {
     await EntryPointContract.getSenderAddress(initCode_2);
-  } catch (error: any) {
+  } catch (error) {
     // catch the revert custom error : error SenderAddressResult(address sender);
     sender_2 = EntryPointContract.interface.decodeErrorResult(
       "SenderAddressResult",
@@ -117,7 +116,7 @@ export async function run() {
 
   const nonce_2 = await EntryPointContract.getNonce(sender_2, 0);
 
-  let userOp_2: UserOperation = {
+  let userOp_2 = {
     ...DefaultsForUserOp,
     sender: sender_2,
     nonce: nonce_2,
