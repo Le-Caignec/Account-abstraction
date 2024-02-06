@@ -38,36 +38,32 @@ export async function runBatchOfTransaction() {
     ProtectedDataSharingFactory.interface.encodeFunctionData(
       "createCollection"
     );
-  // 3_create_a_protectedData
-  const innerCallData_3 =
-    ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
-  // 4_make_an_approval
-  const innerCallData_4 =
-    ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
-  // 5_create_an_app
-  const innerCallData_5 =
-    ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
-  // 6_transfer_App_ownership_to_the_protectedDataSharing_contract
-  const innerCallData_6 =
-    ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
-  // 7_add_protectedData_to_collection
-  const innerCallData_7 =
-    ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
-  // 8_set_subscription_params
-  const innerCallData_8 =
-    ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
-  // 9_set_subscription_params
-  const innerCallData_9 =
-    ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
+  // // 3_create_a_protectedData
+  // const innerCallData_3 =
+  //   ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
+  // // 4_make_an_approval
+  // const innerCallData_4 =
+  //   ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
+  // // 5_create_an_app
+  // const innerCallData_5 =
+  //   ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
+  // // 6_transfer_App_ownership_to_the_protectedDataSharing_contract
+  // const innerCallData_6 =
+  //   ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
+  // // 7_add_protectedData_to_collection
+  // const innerCallData_7 =
+  //   ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
+  // // 8_set_subscription_params
+  // const innerCallData_8 =
+  //   ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
+  // // 9_set_subscription_params
+  // const innerCallData_9 =
+  //   ProtectedDataSharingFactory.interface.encodeFunctionData("count", []);
 
   //batch the inner CallData
   const callData = AccountAbstraction.interface.encodeFunctionData(
     "executeBatch",
-    [
-      [TestCounterAddress, TestCounterAddress],
-      [0, 0],
-      [innerCallData_1, innerCallData_2],
-    ]
+    [[ProtectedDataSharingAddress], [0], [innerCallData_2]]
   );
 
   // use the create2 to
@@ -91,8 +87,8 @@ export async function runBatchOfTransaction() {
     nonce,
     initCode,
     callData,
-    callGasLimit: 500_00,
-    verificationGasLimit: 2_100_00,
+    callGasLimit: 3_000_00,
+    verificationGasLimit: 3_100_00,
   };
 
   const packedSignedUserOperation = await signUserOp(
@@ -113,7 +109,9 @@ export async function runBatchOfTransaction() {
   );
 
   console.log(
-    await TestCounterFactory.attach(TestCounterAddress).counters(sender)
+    await ProtectedDataSharingFactory.attach(
+      ProtectedDataSharingAddress
+    )._balances(sender)
   );
   console.log("Success 🏎️");
 }

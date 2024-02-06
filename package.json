@@ -7,7 +7,8 @@
     "deploy:protectedDataSharing": "hardhat run ./deploy/2_deploy_protected_data_sharing.ts",
     "start": "hardhat run ./scripts/withoutAggregator/SimpleUser0p.ts",
     "start:BatchUserOp": "hardhat run ./scripts/BatchUser0p.ts ",
-    "start:AggUserOp": "hardhat run ./scripts/AggUser0p.ts "
+    "start:AggUserOp": "hardhat run ./scripts/AggUser0p.ts ",
+    "start:UseCase": "hardhat run ./scripts/UseCase.ts "
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",

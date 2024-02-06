@@ -8,7 +8,6 @@ import "../interfaces/IAccount.sol";
 import "../interfaces/IEntryPoint.sol";
 import "./Helpers.sol";
 import "./UserOperationLib.sol";
-import "hardhat/console.sol";
 
 /**
  * Basic account implementation.
@@ -55,7 +54,6 @@ abstract contract BaseAccount is IAccount {
     ) external virtual override returns (uint256 validationData) {
         _requireFromEntryPoint();
         validationData = _validateSignature(userOp, userOpHash);
-        console.log(validationData);
         _validateNonce(userOp.nonce);
         _payPrefund(missingAccountFunds);
     }

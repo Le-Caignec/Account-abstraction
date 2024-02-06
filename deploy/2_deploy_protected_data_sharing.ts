@@ -6,9 +6,7 @@ import {
 } from "../config/config";
 
 export async function deployProtectedDataSharing() {
-  console.log("Starting deployment...");
   const [deployer] = await ethers.getSigners();
-  console.log("Deploying contracts with the account:", deployer.address);
 
   // pass the registry instance to the deploy method
   const ProtectedDataSharingFactory = await ethers.getContractFactory(
