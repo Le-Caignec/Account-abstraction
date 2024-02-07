@@ -1,6 +1,9 @@
 import pkg from "hardhat";
 import { DefaultsForUserOp, signUserOp } from "./utils/UserOp.js";
-import { POCO_PROTECTED_DATA_REGISTRY_ADDRESS } from "../config/config.js";
+import {
+  POCO_PROTECTED_DATA_REGISTRY_ADDRESS,
+  POCO_APP_REGISTRY_ADDRESS,
+} from "../config/config.js";
 import { createDatasetFor } from "./singleFunction/dataset.js";
 import { createAppFor } from "./singleFunction/app.js";
 const { ethers } = pkg;
@@ -28,6 +31,10 @@ export async function runBatchOfTransaction() {
     "IRegistry",
     POCO_PROTECTED_DATA_REGISTRY_ADDRESS
   );
+  const AppRegistry = await ethers.getContractAt(
+    "IRegistry",
+    POCO_APP_REGISTRY_ADDRESS
+  );
 
   const chainId = (await ethers.provider.getNetwork()).chainId;
   const rpcURL = hre.network.config.url;
@@ -54,6 +61,14 @@ export async function runBatchOfTransaction() {
     )[0];
     console.log("==AA Address==", sender);
   }
+  // create_an_app
+  const appAddress = await createAppFor(sender, rpcURL);
+  console.log("appAddress", appAddress, await AppRegistry.ownerOf(appAddress));
+  // create_a_protectedData
+  const protectedDataAddress = await createDatasetFor(sender, rpcURL);
+  const protectedDataTokenId = ethers
+    .getBigInt(protectedDataAddress.toLowerCase())
+    .toString();
 
   // 2_create_a_collection
   const innerCallData_2 =
@@ -62,20 +77,11 @@ export async function runBatchOfTransaction() {
     );
   const collectionTokenId = 0; // check what is the last collectionTokenID
 
-  // create_a_protectedData
-  const protectedDataAddress = await createDatasetFor(sender, rpcURL);
-  const protectedDataTokenId = ethers
-    .getBigInt(protectedDataAddress.toLowerCase())
-    .toString();
-
   // 3_make_an_approval
   const innerCallData_3 = ProtectedDataRegistry.interface.encodeFunctionData(
     "approve",
     [ProtectedDataSharingAddress, protectedDataTokenId]
   );
-
-  // create_an_app
-  const appAddress = await createAppFor(sender, rpcURL);
 
   // 4_add_protectedData_to_collection
   const innerCallData_4 =
@@ -86,7 +92,7 @@ export async function runBatchOfTransaction() {
 
   // 5_set_subscription_params
   const subscriptionParams = {
-    price: subscriptionPrice,
+    price: ethers.parseEther("0.0003"),
     duration: 1_500,
   };
   const innerCallData_5 =
@@ -132,9 +138,9 @@ export async function runBatchOfTransaction() {
     nonce,
     initCode,
     callData,
-    callGasLimit: 6_000_00,
-    verificationGasLimit: 6_000_00,
-    preVerificationGas: 6_000_00,
+    callGasLimit: 8_000_00,
+    verificationGasLimit: 8_000_00,
+    preVerificationGas: 8_000_00,
   };
 
   const packedSignedUserOperation = await signUserOp(
