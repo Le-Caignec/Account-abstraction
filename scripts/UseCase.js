@@ -25,7 +25,7 @@ export async function runBatchOfTransaction() {
   );
   const AccountAbstraction = await ethers.getContractFactory("SimpleAccount");
   const ProtectedDataSharingFactory = await ethers.getContractFactory(
-    "ProtectedDataSharing"
+    "ProtectedDataSharingV2"
   );
   const ProtectedDataRegistry = await ethers.getContractAt(
     "IRegistry",
@@ -63,7 +63,6 @@ export async function runBatchOfTransaction() {
   }
   // create_an_app
   const appAddress = await createAppFor(sender, rpcURL);
-  console.log("appAddress", appAddress, await AppRegistry.ownerOf(appAddress));
   // create_a_protectedData
   const protectedDataAddress = await createDatasetFor(sender, rpcURL);
   const protectedDataTokenId = ethers
@@ -75,7 +74,7 @@ export async function runBatchOfTransaction() {
     ProtectedDataSharingFactory.interface.encodeFunctionData(
       "createCollection"
     );
-  const collectionTokenId = 0; // check what is the last collectionTokenID
+  const collectionTokenId = 1; // check what is the last collectionTokenID
 
   // 3_make_an_approval
   const innerCallData_3 = ProtectedDataRegistry.interface.encodeFunctionData(
