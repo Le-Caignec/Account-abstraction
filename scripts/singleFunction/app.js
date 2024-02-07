@@ -5,7 +5,7 @@ const createAppFor = async (owner, rpc) => {
   const iexecAppOwner = new IExec({
     ethProvider: utils.getSignerFromPrivateKey(rpc, appOwnerWallet),
   });
-  const { address: appAddress } = await iexecAppOwner.app.deployApp({
+  const { address: appAddress, txHash } = await iexecAppOwner.app.deployApp({
     owner,
     name: `test app${Date.now()}`,
     type: "DOCKER",
@@ -13,6 +13,8 @@ const createAppFor = async (owner, rpc) => {
     checksum:
       "0x00f51494d7a42a3c1c43464d9f09e06b2a99968e3b978f6cd11ab3410b7bcd14",
   });
+  await ethers.provider.waitForTransaction(txHash);
+
   return appAddress;
 };
 
